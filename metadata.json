@@ -1,0 +1,5 @@
+{
+  "name": "AI Lead Scraper",
+  "description": "An application that uses AI to generate business leads based on a search query, city, and country. It then sends the structured lead data to a specified webhook.",
+  "requestFramePermissions": []
+}
