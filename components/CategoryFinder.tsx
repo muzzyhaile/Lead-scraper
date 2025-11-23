@@ -19,8 +19,8 @@ const CategoryFinder: React.FC<CategoryFinderProps> = ({ onSubmit, isLoading, ca
     };
 
     return (
-        <div className="p-6 bg-gray-800 rounded-xl shadow-lg">
-            <h2 className="text-xl font-bold text-white mb-4">1. Discover Lead Categories</h2>
+        <div className="p-8 bg-white rounded-2xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">1. Discover Lead Categories</h2>
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-grow">
                     <label htmlFor="topic" className="sr-only">Event or Topic</label>
@@ -30,14 +30,14 @@ const CategoryFinder: React.FC<CategoryFinderProps> = ({ onSubmit, isLoading, ca
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder="Enter an event or topic (e.g., wedding)"
-                        className="w-full px-3 py-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-shadow"
                         required
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex justify-center items-center gap-2 px-4 py-3 bg-teal-600 text-white font-semibold rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-500 disabled:bg-teal-400 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="flex justify-center items-center gap-2 px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                 >
                     {isLoading ? <SpinnerIcon /> : <LightbulbIcon />}
                     {isLoading ? 'Finding...' : 'Find Categories'}
@@ -45,14 +45,14 @@ const CategoryFinder: React.FC<CategoryFinderProps> = ({ onSubmit, isLoading, ca
             </form>
 
             {categories.length > 0 && (
-                <div className="mt-6">
-                    <h3 className="text-sm font-medium text-gray-400 mb-3">Suggested Categories:</h3>
+                <div className="mt-8 animate-fade-up">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Suggested Categories</h3>
                     <div className="flex flex-wrap gap-2">
                         {categories.map((category, index) => (
                             <button
                                 key={index}
                                 onClick={() => onCategorySelect(category)}
-                                className="px-3 py-1.5 bg-gray-700 text-gray-200 text-sm font-medium rounded-full hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                                className="px-4 py-2 bg-brand-50 text-brand-700 text-sm font-medium rounded-full hover:bg-brand-100 transition-colors duration-200 border border-brand-100"
                                 title={`Use "${category}" as search query`}
                             >
                                 {category}

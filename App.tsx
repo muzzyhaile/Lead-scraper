@@ -154,7 +154,7 @@ function App() {
     <button
       onClick={handleSendToExcelSheet}
       disabled={status === 'sending' || status === 'generating' || leads.length === 0 || hasBeenSent}
-      className="flex justify-center items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+      className="flex justify-center items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
     >
       {hasBeenSent ? (
         <CheckIcon />
@@ -171,7 +171,7 @@ function App() {
      <button
       onClick={handleDownloadCSV}
       disabled={leads.length === 0 || status === 'generating' || status === 'sending'}
-      className="flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+      className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
     >
       <DownloadIcon />
       Download CSV
@@ -179,44 +179,45 @@ function App() {
   );
 
   const actionButtons = (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       {downloadButton}
       {sendButton}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-white tracking-tight sm:text-5xl">
+    <div className="min-h-screen bg-[#fafafa] text-gray-900 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto animate-fade-up">
+        <header className="text-center mb-10">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl mb-3">
             AI Lead Scraper
           </h1>
-          <p className="mt-4 text-lg text-gray-400">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Generate business leads using AI and send them directly to your webhook.
           </p>
         </header>
 
-        <main>
+        <main className="space-y-8">
           <CategoryFinder
             onSubmit={handleFindCategories}
             isLoading={status === 'findingCategories'}
             categories={categories}
             onCategorySelect={handleCategorySelect}
           />
-          <div className="mt-8">
-            <LeadForm 
-              onSubmit={handleScrapeLeads} 
-              isLoading={status === 'generating'}
-              formData={formData}
-              onUpdate={handleFormUpdate}
-            />
-          </div>
+          
+          <LeadForm 
+            onSubmit={handleScrapeLeads} 
+            isLoading={status === 'generating'}
+            formData={formData}
+            onUpdate={handleFormUpdate}
+          />
+
           <StatusMessage status={status} message={message} />
+          
           <LeadsTable leads={leads} actionButton={leads.length > 0 ? actionButtons : undefined} />
         </main>
 
-        <footer className="text-center mt-12 text-gray-500 text-sm">
+        <footer className="text-center mt-16 text-gray-400 text-sm pb-8">
           <p>Powered by Gemini API. Data is AI-generated for demonstration purposes.</p>
         </footer>
       </div>

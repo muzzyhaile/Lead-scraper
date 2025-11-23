@@ -12,12 +12,12 @@ const StatusMessage: React.FC<StatusMessageProps> = ({ status, message }) => {
         return null;
     }
     
-    const baseClasses = 'mt-4 text-center p-4 rounded-md text-sm';
+    const baseClasses = 'mt-6 text-center p-4 rounded-lg text-sm font-medium animate-fade-up border';
     const statusClasses = {
-        generating: 'bg-blue-900/50 text-blue-300',
-        sending: 'bg-blue-900/50 text-blue-300',
-        success: 'bg-green-900/50 text-green-300',
-        error: 'bg-red-900/50 text-red-300',
+        generating: 'bg-brand-50 text-brand-700 border-brand-100',
+        sending: 'bg-brand-50 text-brand-700 border-brand-100',
+        success: 'bg-green-50 text-green-700 border-green-100',
+        error: 'bg-red-50 text-red-700 border-red-100',
     };
     
     const statusText = {

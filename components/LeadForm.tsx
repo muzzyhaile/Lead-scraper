@@ -26,48 +26,48 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
     };
 
     return (
-        <div className="p-6 bg-gray-800 rounded-xl shadow-lg">
-             <h2 className="text-xl font-bold text-white mb-4">Generate Leads</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-300 mb-1">Search Query</label>
+        <div className="p-8 bg-white rounded-2xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
+             <h2 className="text-xl font-semibold text-gray-900 mb-6">2. Generate Leads</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1">
+                        <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-2">Search Query</label>
                         <input
                             id="searchQuery"
                             type="text"
                             value={formData.searchQuery}
                             onChange={(e) => onUpdate('searchQuery', e.target.value)}
                             placeholder="e.g., italian restaurants"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 transition-shadow"
                             required
                         />
                     </div>
                     <div>
-                        <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">City</label>
+                        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
                         <input
                             id="city"
                             type="text"
                             value={formData.city}
                             onChange={(e) => onUpdate('city', e.target.value)}
                             placeholder="e.g., New York"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 transition-shadow"
                             required
                         />
                     </div>
                     <div>
-                        <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-1">Country</label>
+                        <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                         <input
                             id="country"
                             type="text"
                             value={formData.country}
                             onChange={(e) => onUpdate('country', e.target.value)}
                             placeholder="e.g., USA"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 transition-shadow"
                             required
                         />
                     </div>
                     <div>
-                        <label htmlFor="numberOfLeads" className="block text-sm font-medium text-gray-300 mb-1">Number of Leads</label>
+                        <label htmlFor="numberOfLeads" className="block text-sm font-medium text-gray-700 mb-2">Number of Leads</label>
                         <input
                             id="numberOfLeads"
                             type="number"
@@ -75,7 +75,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
                             onChange={(e) => onUpdate('numberOfLeads', Math.max(1, parseInt(e.target.value, 10)) || 1)}
                             min="1"
                             max="50"
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 transition-shadow"
                             required
                         />
                     </div>
@@ -83,7 +83,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="w-full flex justify-center items-center gap-2 px-6 py-3.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:bg-brand-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                     {isLoading ? <SpinnerIcon /> : <SearchIcon />}
                     {isLoading ? 'Generating Leads...' : 'Scrape Leads'}
