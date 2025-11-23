@@ -35,7 +35,7 @@ function App() {
 
   const handleFindCategories = async (topic: string) => {
     setStatus('findingCategories');
-    setMessage(`Searching for categories related to "${topic}"...`);
+    setMessage(`Searching for market segments related to "${topic}"...`);
     setCategories([]);
     setLeads([]);
 
@@ -43,7 +43,7 @@ function App() {
       const foundCategories = await generateCategories(topic);
       setCategories(foundCategories);
       setStatus('success');
-      setMessage(`Found ${foundCategories.length} categories. Click one to populate the search query below.`);
+      setMessage(`Found ${foundCategories.length} segments. Click one to start a Prospect Play.`);
     } catch (error) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -55,7 +55,7 @@ function App() {
   const handleScrapeLeads = async () => {
     const { searchQuery, city, country, numberOfLeads } = formData;
     setStatus('generating');
-    setMessage(`Generating ${numberOfLeads} lead(s) for "${searchQuery}". This may take a moment...`);
+    setMessage(`Executing Prospect Play for "${searchQuery}" in ${city}. Enriched data extraction in progress...`);
     setLeads([]);
     setHasBeenSent(false);
 
@@ -74,7 +74,7 @@ function App() {
       }));
 
       setStatus('success');
-      setMessage(`Successfully generated ${processedLeads.length} leads. You can now download them or send them to your webhook.`);
+      setMessage(`Play Complete. Found ${processedLeads.length} prospects with enriched contact data and icebreakers.`);
       setLeads(processedLeads);
 
     } catch (error) {
@@ -93,7 +93,7 @@ function App() {
     }
     
     setStatus('sending');
-    setMessage('Sending leads to webhook...');
+    setMessage('Syncing prospects to webhook...');
     
     try {
       const response = await fetch(WEBHOOK_URL, {
@@ -110,13 +110,13 @@ function App() {
       
       setHasBeenSent(true);
       setStatus('success');
-      setMessage(`Successfully dispatched ${leads.length} leads to the webhook.`);
+      setMessage(`Successfully synced ${leads.length} prospects to the workspace.`);
 
     } catch (error) {
       console.error("Failed to send to webhook:", error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred.';
       setStatus('error');
-      setMessage(`Failed to send leads. ${errorMessage}`);
+      setMessage(`Failed to sync prospects. ${errorMessage}`);
     }
   };
 
@@ -144,7 +144,7 @@ function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', 'leads.csv');
+    link.setAttribute('download', 'prospects.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -163,7 +163,7 @@ function App() {
       ) : (
         <SendIcon />
       )}
-      {hasBeenSent ? 'Sent!' : status === 'sending' ? 'Sending...' : 'Send to Excel Sheet'}
+      {hasBeenSent ? 'Synced!' : status === 'sending' ? 'Syncing...' : 'Sync to Workspace'}
     </button>
   );
 
@@ -190,10 +190,10 @@ function App() {
       <div className="max-w-7xl mx-auto animate-fade-up">
         <header className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl mb-3">
-            AI Lead Scraper
+            Prospect Finder
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Generate business leads using AI and send them directly to your webhook.
+            Play-based prospecting: Search, enrich, score, and sync directly to your workspace.
           </p>
         </header>
 
@@ -218,7 +218,7 @@ function App() {
         </main>
 
         <footer className="text-center mt-16 text-gray-400 text-sm pb-8">
-          <p>Powered by Gemini API. Data is AI-generated for demonstration purposes.</p>
+          <p>Powered by Gemini API. Prospect enrichment is AI-simulated for demonstration.</p>
         </footer>
       </div>
     </div>

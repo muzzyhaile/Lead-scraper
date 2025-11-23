@@ -46,17 +46,19 @@ export const generateLeads = async (
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  // When using Google Maps grounding, we cannot use responseSchema or responseMimeType.
-  // We must prompt the model to return strict JSON.
-  const prompt = `Using Google Maps, find ${numberOfLeads} real businesses matching "${searchQuery}" in ${city}, ${country}.
-  
-  CRITICAL INSTRUCTION: You must output a strictly valid JSON array containing objects with the details below. Do not include markdown formatting (like \`\`\`json). Do not output conversational text. Just the JSON string.
+  // Based on the "Prospect Finder" flow, we emulate the extraction and icebreaker generation
+  // using Gemini's knowledge and Maps grounding.
+  const prompt = `Act as an advanced "Prospect Finder" bot. Using Google Maps, find ${numberOfLeads} real businesses matching "${searchQuery}" in ${city}, ${country}.
 
-  The JSON object structure for each lead must be:
+  CRITICAL INSTRUCTION: You must output a strictly valid JSON array.
+  
+  For each business found, you must perform "Contact Extraction" and "Icebreaker Generation" as if you were analyzing their website content.
+  
+  Structure your JSON object exactly like this for each lead:
   {
     "companyName": "Business Name",
     "category": "Primary Category",
-    "description": "Brief description",
+    "description": "Brief description of what they do",
     "address": "Full address",
     "city": "City",
     "country": "Country",
@@ -64,6 +66,7 @@ export const generateLeads = async (
     "phone": "Phone Number",
     "email": "Email address (leave empty if not found)",
     "website": "Website URL",
+    "googleMapsLink": "Direct URL to the business listing on Google Maps",
     "linkedIn": "LinkedIn URL (optional)",
     "facebook": "Facebook URL (optional)",
     "instagram": "Instagram URL (optional)",
@@ -71,8 +74,19 @@ export const generateLeads = async (
     "reviewCount": Number,
     "businessHours": "e.g. Mon-Fri 9-5",
     "qualityScore": Number (1-100 based on data completeness),
-    "qualityReasoning": "Why this score was given"
-  }`;
+    "confidenceOverall": Number (0 to 1, heuristic score of how accurate this contact info likely is),
+    "socialContext": "Short snippet justifying the social link (e.g., 'Follow us on LinkedIn')",
+    "icebreaker": "One-line personalized email intro."
+  }
+
+  ICEBREAKER RULE:
+  Generate the 'icebreaker' field using this specific format:
+  "Hi—I'm not sure if this is {name} or perhaps the front office, but I'm a big fan of {paraphrasedApproach} and wanted to run something by {him/her}."
+  - {name} = a specific person name if you can find one, otherwise use the company name.
+  - {paraphrasedApproach} = 3–8 words paraphrasing what the company appears to do based on their category/description.
+  - {him/her} = pronoun if inferable, otherwise 'them'.
+  
+  Example Icebreaker: "Hi—I'm not sure if this is Jane or perhaps the front office, but I'm a big fan of your custom floral arrangements for weddings and wanted to run something by her."`;
 
   try {
     const response = await ai.models.generateContent({
@@ -85,7 +99,7 @@ export const generateLeads = async (
 
     let jsonText = response.text || '';
     
-    // Clean up any potential markdown code blocks the model might still add
+    // Clean up any potential markdown code blocks
     if (jsonText.includes('```')) {
         jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '');
     }

@@ -12,15 +12,15 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, actionButton }) => {
     }
 
     const headers = [
-        'Lead #', 'Company', 'Category', 'Address', 'Phone', 'Email', 'Website', 'Rating', 'Reviews',
+        'Lead #', 'Company', 'Icebreaker (AI)', 'Category', 'Confidence', 'Address', 'Phone', 'Email', 'Website', 'Maps Listing', 'Rating', 'Reviews',
         'Quality Score', 'Generated Date', 'Search City', 'Search Country', 'Description', 'Coordinates',
-        'LinkedIn', 'Facebook', 'Instagram', 'Business Hours', 'Quality Reasoning', 'Status'
+        'LinkedIn', 'Facebook', 'Instagram', 'Business Hours', 'Status'
     ];
 
     return (
         <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fade-up">
             <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-b border-gray-100 gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">Generated Leads</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Prospect Finder Results</h2>
                 {actionButton}
             </div>
             <div className="overflow-x-auto">
@@ -37,15 +37,39 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, actionButton }) => {
                             <tr key={lead.leadNumber} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">{lead.leadNumber}</td>
                                 <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">{lead.companyName}</td>
+                                <td className="px-6 py-4 min-w-[300px]">
+                                    <div className="p-3 bg-brand-50 rounded-lg border border-brand-100 italic text-brand-700 text-xs">
+                                        "{lead.icebreaker}"
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
                                         {lead.category}
                                     </span>
                                 </td>
+                                <td className="px-6 py-4">
+                                     <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                                         lead.confidenceOverall > 0.8 ? 'bg-green-100 text-green-800' :
+                                         lead.confidenceOverall > 0.5 ? 'bg-yellow-100 text-yellow-800' :
+                                         'bg-red-100 text-red-800'
+                                     }`}>
+                                        {(lead.confidenceOverall * 100).toFixed(0)}%
+                                     </span>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">{`${lead.address}, ${lead.city}, ${lead.country}`}</td>
                                 <td className="px-6 py-4 whitespace-nowrap"><a href={`tel:${lead.phone}`} className="text-brand-600 hover:text-brand-700 hover:underline">{lead.phone}</a></td>
                                 <td className="px-6 py-4 whitespace-nowrap"><a href={`mailto:${lead.email}`} className="text-brand-600 hover:text-brand-700 hover:underline">{lead.email}</a></td>
                                 <td className="px-6 py-4 whitespace-nowrap"><a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline">{lead.website}</a></td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {lead.googleMapsLink ? (
+                                        <a href={lead.googleMapsLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 hover:underline">
+                                            <span>View Map</span>
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                        </a>
+                                    ) : (
+                                        <span className="text-gray-400">-</span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-1 text-amber-500">
                                         <span>{lead.rating}</span>
@@ -70,7 +94,6 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, actionButton }) => {
                                 <td className="px-6 py-4 whitespace-nowrap">{lead.facebook && <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline">Link</a>}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{lead.instagram && <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:text-brand-700 hover:underline">Link</a>}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{lead.businessHours}</td>
-                                <td className="px-6 py-4 max-w-xs truncate text-gray-500">{lead.qualityReasoning}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-100">{lead.status}</span>
                                 </td>

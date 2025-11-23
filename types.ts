@@ -1,4 +1,3 @@
-
 export interface GeneratedLeadData {
   companyName: string;
   category: string;
@@ -10,6 +9,7 @@ export interface GeneratedLeadData {
   phone: string;
   email: string;
   website: string;
+  googleMapsLink: string;
   linkedIn: string;
   facebook: string;
   instagram: string;
@@ -17,7 +17,10 @@ export interface GeneratedLeadData {
   reviewCount: number;
   businessHours: string;
   qualityScore: number;
-  qualityReasoning: string;
+  // New fields from Prospectfinder logic
+  confidenceOverall: number; // 0-1 score
+  icebreaker: string; // Personalized one-liner
+  socialContext: string; // Context for where social link was found
 }
 
 export interface Lead extends GeneratedLeadData {

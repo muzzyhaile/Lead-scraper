@@ -27,11 +27,11 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
 
     return (
         <div className="p-8 bg-white rounded-2xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
-             <h2 className="text-xl font-semibold text-gray-900 mb-6">2. Generate Leads</h2>
+             <h2 className="text-xl font-semibold text-gray-900 mb-6">2. Define Play & Generate</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="md:col-span-1">
-                        <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-2">Search Query</label>
+                        <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-2">Target Audience (Keyword)</label>
                         <input
                             id="searchQuery"
                             type="text"
@@ -67,7 +67,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
                         />
                     </div>
                     <div>
-                        <label htmlFor="numberOfLeads" className="block text-sm font-medium text-gray-700 mb-2">Number of Leads</label>
+                        <label htmlFor="numberOfLeads" className="block text-sm font-medium text-gray-700 mb-2">Result Limit</label>
                         <input
                             id="numberOfLeads"
                             type="number"
@@ -86,7 +86,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, isLoading, formData, onUp
                     className="w-full flex justify-center items-center gap-2 px-6 py-3.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:bg-brand-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                     {isLoading ? <SpinnerIcon /> : <SearchIcon />}
-                    {isLoading ? 'Generating Leads...' : 'Scrape Leads'}
+                    {isLoading ? 'Running Prospect Play...' : 'Run Prospect Play'}
                 </button>
             </form>
         </div>
