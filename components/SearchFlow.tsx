@@ -231,6 +231,14 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
                         <h2 className="text-xl font-bold">Review Found Leads</h2>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                         <button
+                            onClick={handleDownloadCSV}
+                            className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                            title="Download raw list"
+                        >
+                            <DownloadIcon />
+                            CSV
+                        </button>
                         <div className="flex bg-gray-200 rounded-lg p-1 w-full sm:w-auto">
                             <button 
                                 onClick={() => setViewMode('map')}
@@ -258,7 +266,7 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
 
                 <StatusMessage status={status} message={message} />
                 {status !== 'generating' && (
-                    <p className="mb-4 text-sm text-gray-500">We found these businesses on Google Maps. Verify locations or click "AI Enrich" to get emails.</p>
+                    <p className="mb-4 text-sm text-gray-500">We found these businesses on Google Maps. Verify locations or click "AI Enrich" to get emails and contact info.</p>
                 )}
 
                 {viewMode === 'map' ? (

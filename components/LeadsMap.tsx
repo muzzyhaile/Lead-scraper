@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Lead } from '../types';
 
@@ -33,6 +34,7 @@ const LeadsMap: React.FC<LeadsMapProps> = ({ leads, onLeadClick }) => {
         const map = mapRef.current;
         
         // Ensure map renders correctly if container size changed
+        // This fixes the issue where map might appear gray or not centered
         setTimeout(() => {
             map.invalidateSize();
         }, 200);
@@ -84,15 +86,18 @@ const LeadsMap: React.FC<LeadsMapProps> = ({ leads, onLeadClick }) => {
             }
         });
 
+        // Smart Focus: Only zoom if we have valid markers
         if (validMarkers > 0) {
-            map.fitBounds(bounds, { 
+            // Use flyToBounds for smoother transition
+            map.flyToBounds(bounds, { 
                 padding: [50, 50],
-                maxZoom: 15,
-                animate: true
+                maxZoom: 14, // Prevent zooming in too close on a single pin
+                animate: true,
+                duration: 1.5
             });
         }
 
-    }, [leads, onLeadClick]);
+    }, [leads, onLeadClick]); // Re-run when leads change
 
     return (
         <div className="w-full h-full relative z-0">
