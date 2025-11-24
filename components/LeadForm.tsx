@@ -101,19 +101,26 @@ const LeadForm: React.FC<LeadFormProps> = ({
                          <TargetIcon />
                          Load Saved Audience Strategy (Optional)
                      </label>
-                     <select 
-                        id="strategySelect"
-                        onChange={(e) => onStrategySelect(e.target.value)}
-                        className="w-full px-4 py-2 bg-white border border-brand-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-                        defaultValue=""
-                     >
-                         <option value="" disabled>-- Select a target audience --</option>
-                         {savedStrategies.map(s => (
-                             <option key={s.id} value={s.id}>
-                                 {s.personaName} - "{s.searchQuery}"
-                             </option>
-                         ))}
-                     </select>
+                     <div className="max-w-full md:max-w-lg">
+                        <select 
+                            id="strategySelect"
+                            onChange={(e) => onStrategySelect(e.target.value)}
+                            className="w-full px-4 py-2 bg-white border border-brand-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer truncate"
+                            defaultValue=""
+                        >
+                            <option value="" disabled>-- Select a target audience --</option>
+                            {savedStrategies.map(s => {
+                                const label = `${s.personaName} - "${s.searchQuery}"`;
+                                // Truncate text to prevent dropdown from exploding screen width
+                                const truncatedLabel = label.length > 55 ? label.substring(0, 55) + '...' : label;
+                                return (
+                                    <option key={s.id} value={s.id}>
+                                        {truncatedLabel}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                     </div>
                      <p className="text-xs text-brand-600 mt-2">Selecting an audience will pre-fill the search details and configure the AI Context.</p>
                  </div>
              )}

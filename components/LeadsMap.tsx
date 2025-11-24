@@ -14,31 +14,30 @@ const LeadsMap: React.FC<LeadsMapProps> = ({ leads, onLeadClick }) => {
 
     useEffect(() => {
         if (!mapContainerRef.current) return;
-        // Access global L from window
         const L = (window as any).L;
         if (!L) return;
 
         // Initialize map if not already done
         if (!mapRef.current) {
             mapRef.current = L.map(mapContainerRef.current, {
-                scrollWheelZoom: false, // Prevents the map from hijacking page scroll
+                scrollWheelZoom: false, // Prevents scroll trapping
                 zoomControl: true,
+                attributionControl: false 
             }).setView([20, 0], 2);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(mapRef.current);
+
+            // Add clear attribution for the user
+            L.control.attribution({
+                prefix: 'Locations via Google Maps'
+            }).addTo(mapRef.current);
         }
 
         const map = mapRef.current;
         
-        // Ensure map renders correctly if container size changed
-        // This fixes the issue where map might appear gray or not centered
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 200);
-
         // Clear existing markers
         markersRef.current.forEach(m => map.removeLayer(m));
         markersRef.current = [];
@@ -67,7 +66,6 @@ const LeadsMap: React.FC<LeadsMapProps> = ({ leads, onLeadClick }) => {
                     .addTo(map)
                     .on('click', () => onLeadClick(lead));
                 
-                // Enhanced Tooltip
                 marker.bindTooltip(`
                     <div class="text-center">
                         <div class="font-bold text-gray-900">${lead.companyName}</div>
@@ -86,18 +84,23 @@ const LeadsMap: React.FC<LeadsMapProps> = ({ leads, onLeadClick }) => {
             }
         });
 
-        // Smart Focus: Only zoom if we have valid markers
-        if (validMarkers > 0) {
-            // Use flyToBounds for smoother transition
-            map.flyToBounds(bounds, { 
-                padding: [50, 50],
-                maxZoom: 14, // Prevent zooming in too close on a single pin
-                animate: true,
-                duration: 1.5
-            });
-        }
+        // CRITICAL FIX: Invalidate size then fly to bounds to ensure correct centering
+        // The timeout allows the container to render fully in the DOM before calculating bounds
+        setTimeout(() => {
+            map.invalidateSize();
+            if (validMarkers > 0) {
+                map.flyToBounds(bounds, { 
+                    padding: [50, 50],
+                    maxZoom: 15,
+                    animate: true,
+                    duration: 1.0
+                });
+            } else {
+                map.setView([20, 0], 2);
+            }
+        }, 300);
 
-    }, [leads, onLeadClick]); // Re-run when leads change
+    }, [leads, onLeadClick]);
 
     return (
         <div className="w-full h-full relative z-0">

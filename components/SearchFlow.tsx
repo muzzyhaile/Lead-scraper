@@ -9,7 +9,7 @@ import StatusMessage from './StatusMessage';
 import LeadsMap from './LeadsMap';
 import LeadDetailModal from './LeadDetailModal';
 import CallMode from './CallMode';
-import { SendIcon, SpinnerIcon, DownloadIcon, CheckIcon, LightbulbIcon, PhoneIcon } from './icons';
+import { SendIcon, SpinnerIcon, DownloadIcon, CheckIcon, LightbulbIcon, PhoneIcon, GoogleIcon } from './icons';
 
 type Status = 'idle' | 'generating' | 'sending' | 'success' | 'error';
 // New states: refine -> review (map/table) -> results (enriched table) -> calling
@@ -171,8 +171,15 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
   };
 
   const handleDownloadCSV = () => {
-    if (leads.length === 0) return;
-    const headers = Object.keys(leads[0]);
+    if (!leads || leads.length === 0) {
+        alert("No leads to download.");
+        return;
+    }
+    
+    // Dynamically generate headers based on the first lead, or fallback to known types if empty
+    const headers = Object.keys(leads[0] || {});
+    if (headers.length === 0) return;
+
     const escapeCell = (cell: any) => {
       const cellStr = String(cell ?? '');
       return (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) 
@@ -185,7 +192,7 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'prospects.csv';
+    link.download = `prospects_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
   };
 
@@ -228,7 +235,15 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
                 <div className="flex flex-col lg:flex-row items-center justify-between mb-6 gap-4">
                     <div className="flex items-center gap-4 w-full lg:w-auto">
                         <button onClick={() => setCurrentStep('refine')} className="text-sm text-gray-500 hover:text-gray-900 whitespace-nowrap">← New Search</button>
-                        <h2 className="text-xl font-bold">Review Found Leads</h2>
+                        <div>
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                Review Found Businesses
+                            </h2>
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                <GoogleIcon /> 
+                                Verified via Google Maps Grounding
+                            </p>
+                        </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                          <button
@@ -259,14 +274,16 @@ const SearchFlow: React.FC<SearchFlowProps> = ({ projectId, onSaveLeads, savedSt
                             className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg shadow-lg hover:bg-brand-700 transition-all disabled:bg-gray-400"
                         >
                             {status === 'generating' ? <SpinnerIcon /> : <LightbulbIcon />}
-                            {status === 'generating' ? 'Enriching...' : 'AI Enrich'}
+                            {status === 'generating' ? 'Enriching...' : 'Step 2: AI Enrich Data'}
                         </button>
                     </div>
                 </div>
 
                 <StatusMessage status={status} message={message} />
                 {status !== 'generating' && (
-                    <p className="mb-4 text-sm text-gray-500">We found these businesses on Google Maps. Verify locations or click "AI Enrich" to get emails and contact info.</p>
+                    <p className="mb-4 text-sm text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <strong>Info:</strong> These are the verified locations from Google Maps. Click <strong>"AI Enrich Data"</strong> above to extract emails, phone numbers, and generate icebreakers.
+                    </p>
                 )}
 
                 {viewMode === 'map' ? (

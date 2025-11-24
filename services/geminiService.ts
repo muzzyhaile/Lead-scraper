@@ -210,12 +210,13 @@ export const enrichLeads = async (
         const enrichmentPrompt = `
         You are an expert Lead Enrichment AI Agent.
         
-        HERE IS THE BUSINESS DATA:
+        HERE IS THE BUSINESS DATA (From Google Maps):
         Name: ${lead.companyName}
         Website: ${lead.website}
         Location: ${lead.address}
+        Existing Description (Generic): ${lead.description}
     
-        HERE IS THE CRAWLED WEBSITE CONTENT (Raw Text):
+        HERE IS THE CRAWLED WEBSITE CONTENT (Raw Text from Tavily):
         ${crawledContent ? crawledContent.slice(0, 15000) : "No website content available."}
     
         ${icebreakerContext ? `
@@ -237,6 +238,7 @@ export const enrichLeads = async (
         6. Calculate a "Quality Score" (1-100) based on how much info you found.
         7. Calculate a "Confidence Score" (0.0-1.0) on the accuracy of this data.
         8. Write a "Smart Icebreaker".
+        9. CRITICAL: Rewrite the 'enrichedDescription' of the company based on what they actually do, using the crawled text. Replace the generic Google Maps description with a specific, useful business summary (1-2 sentences).
         
         Return a JSON object (NOT an array, just the object for this lead):
         {
@@ -250,7 +252,8 @@ export const enrichLeads = async (
            "qualityScore": number,
            "confidenceOverall": number,
            "socialContext": "string (e.g. 'Found in footer')",
-           "icebreaker": "string"
+           "icebreaker": "string",
+           "enrichedDescription": "string"
         }
         `;
     
@@ -283,7 +286,8 @@ export const enrichLeads = async (
                 qualityScore: enrichedData.qualityScore || 50,
                 confidenceOverall: enrichedData.confidenceOverall || 0.5,
                 socialContext: enrichedData.socialContext || "",
-                icebreaker: enrichedData.icebreaker || `Hi—I'm a big fan of ${lead.companyName} and wanted to connect.`
+                icebreaker: enrichedData.icebreaker || `Hi—I'm a big fan of ${lead.companyName} and wanted to connect.`,
+                description: enrichedData.enrichedDescription || lead.description // Update description with enriched one if available
             };
     
         } catch (err) {
