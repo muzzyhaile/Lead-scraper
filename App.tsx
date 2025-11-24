@@ -1,227 +1,280 @@
-import React, { useState } from 'react';
-import { Lead, GeneratedLeadData } from './types';
-import { generateLeads, generateCategories } from './services/geminiService';
-import { WEBHOOK_URL } from './constants';
-import LeadForm from './components/LeadForm';
-import LeadsTable from './components/LeadsTable';
-import StatusMessage from './components/StatusMessage';
-import CategoryFinder from './components/CategoryFinder';
-import { SendIcon, SpinnerIcon, DownloadIcon, CheckIcon } from './components/icons';
 
-type Status = 'idle' | 'findingCategories' | 'generating' | 'sending' | 'success' | 'error';
+import React, { useState, useEffect } from 'react';
+import { User, DashboardView, Lead, SavedStrategy, Project } from './types';
+import LandingPage from './components/LandingPage';
+import DashboardLayout from './components/DashboardLayout';
+import SearchFlow from './components/SearchFlow';
+import HistoryView from './components/HistoryView';
+import ICPBuilder from './components/ICPBuilder';
+import ProjectList from './components/ProjectList';
+import ProfileSettings from './components/ProfileSettings';
+import ProjectCreate from './components/ProjectCreate';
+import CRMBoard from './components/CRMBoard';
+import DealModal from './components/DealModal';
 
-const initialFormData = {
-  searchQuery: 'italian restaurants',
-  city: 'New York',
-  country: 'USA',
-  numberOfLeads: 5,
+// Simulated User Data
+const MOCK_USER: User = {
+  name: "Demo User",
+  email: "user@example.com",
+  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 };
 
 function App() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [status, setStatus] = useState<Status>('idle');
-  const [message, setMessage] = useState('');
-  const [hasBeenSent, setHasBeenSent] = useState(false);
-  const [formData, setFormData] = useState(initialFormData);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User>(MOCK_USER);
+  const [currentView, setCurrentView] = useState<DashboardView>('projects');
+  
+  // Data State
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  
+  const [history, setHistory] = useState<Lead[]>([]);
+  const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
+  
+  // CRM State
+  const [selectedDeal, setSelectedDeal] = useState<Lead | null>(null);
 
-  const handleFormUpdate = (field: keyof typeof formData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleCategorySelect = (category: string) => {
-    handleFormUpdate('searchQuery', category);
-  };
-
-  const handleFindCategories = async (topic: string) => {
-    setStatus('findingCategories');
-    setMessage(`Searching for market segments related to "${topic}"...`);
-    setCategories([]);
-    setLeads([]);
-
-    try {
-      const foundCategories = await generateCategories(topic);
-      setCategories(foundCategories);
-      setStatus('success');
-      setMessage(`Found ${foundCategories.length} segments. Click one to start a Prospect Play.`);
-    } catch (error) {
-      console.error(error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      setStatus('error');
-      setMessage(errorMessage);
+  // Load data from local storage on mount
+  useEffect(() => {
+    // Projects
+    const savedProjects = localStorage.getItem('prospect_projects');
+    if (savedProjects) {
+        try { setProjects(JSON.parse(savedProjects)); } catch(e) { console.error(e); }
     }
-  };
 
-  const handleScrapeLeads = async () => {
-    const { searchQuery, city, country, numberOfLeads } = formData;
-    setStatus('generating');
-    setMessage(`Executing Prospect Play for "${searchQuery}" in ${city}. Enriched data extraction in progress...`);
-    setLeads([]);
-    setHasBeenSent(false);
-
-    try {
-      const generatedData: GeneratedLeadData[] = await generateLeads(searchQuery, city, country, numberOfLeads);
-
-      const processedLeads: Lead[] = generatedData.map((lead, index) => ({
-        ...lead,
-        generatedDate: new Date().toISOString().split('T')[0],
-        searchCity: city,
-        searchCountry: country,
-        leadNumber: index + 1,
-        status: 'New',
-        contacted: false,
-        notes: '',
-      }));
-
-      setStatus('success');
-      setMessage(`Play Complete. Found ${processedLeads.length} prospects with enriched contact data and icebreakers.`);
-      setLeads(processedLeads);
-
-    } catch (error) {
-      console.error(error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      setStatus('error');
-      setMessage(errorMessage);
-    }
-  };
-
-  const handleSendToExcelSheet = async () => {
-    if (leads.length === 0) {
-      setMessage("No leads to send.");
-      setStatus('error');
-      return;
+    // History
+    const savedLeads = localStorage.getItem('prospect_history');
+    if (savedLeads) {
+      try { setHistory(JSON.parse(savedLeads)); } catch (e) { console.error(e); }
     }
     
-    setStatus('sending');
-    setMessage('Syncing prospects to webhook...');
-    
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(leads),
-      });
+    // Strategies
+    const savedStrat = localStorage.getItem('icp_strategies');
+    if (savedStrat) {
+        try { setSavedStrategies(JSON.parse(savedStrat)); } catch (e) { console.error(e); }
+    }
 
-      if (!response.ok) {
-        throw new Error(`Webhook server responded with status: ${response.status}`);
-      }
+    // Load User
+    const savedUser = localStorage.getItem('prospect_user');
+    if (savedUser) {
+        try { setUser(JSON.parse(savedUser)); } catch(e) { console.error(e); }
+    }
+  }, []);
+
+  const handleUpdateUser = (updatedUser: User) => {
+      setUser(updatedUser);
+      localStorage.setItem('prospect_user', JSON.stringify(updatedUser));
+  };
+
+  const handleLogin = () => {
+    // Simulate Google Login delay
+    const button = document.activeElement as HTMLButtonElement;
+    if(button) {
+        const originalText = button.innerText;
+        button.innerText = "Authenticating...";
+        button.disabled = true;
+        setTimeout(() => {
+            setIsAuthenticated(true);
+        }, 800);
+    } else {
+        setIsAuthenticated(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActiveProject(null);
+    setCurrentView('projects');
+  };
+
+  // --- PROJECT MANAGEMENT ---
+
+  const handleCreateProject = (name: string, description: string) => {
+      const newProject: Project = {
+          id: Date.now().toString(),
+          name,
+          description,
+          createdAt: new Date().toISOString()
+      };
+      const updated = [newProject, ...projects];
+      setProjects(updated);
+      localStorage.setItem('prospect_projects', JSON.stringify(updated));
+      setActiveProject(newProject);
+      setCurrentView('icp-play'); // Go to ICP first in new project
+  };
+
+  const handleDeleteProject = (id: string) => {
+      const updatedProjects = projects.filter(p => p.id !== id);
+      setProjects(updatedProjects);
+      localStorage.setItem('prospect_projects', JSON.stringify(updatedProjects));
       
-      setHasBeenSent(true);
-      setStatus('success');
-      setMessage(`Successfully synced ${leads.length} prospects to the workspace.`);
+      // Also cleanup leads/strategies (optional for demo, but good practice)
+      const updatedHistory = history.filter(l => l.projectId !== id);
+      setHistory(updatedHistory);
+      localStorage.setItem('prospect_history', JSON.stringify(updatedHistory));
 
-    } catch (error) {
-      console.error("Failed to send to webhook:", error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred.';
-      setStatus('error');
-      setMessage(`Failed to sync prospects. ${errorMessage}`);
-    }
-  };
-
-  const handleDownloadCSV = () => {
-    if (leads.length === 0) return;
-
-    const headers = Object.keys(leads[0]);
-    const escapeCell = (cell: any): string => {
-      const cellStr = String(cell ?? '');
-      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-        return `"${cellStr.replace(/"/g, '""')}"`;
+      if (activeProject?.id === id) {
+          setActiveProject(null);
+          setCurrentView('projects');
       }
-      return cellStr;
-    };
-
-    const csvRows = [
-      headers.join(','),
-      ...leads.map(lead =>
-        headers.map(header => escapeCell(lead[header as keyof Lead])).join(',')
-      )
-    ];
-
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'prospects.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
-  const sendButton = (
-    <button
-      onClick={handleSendToExcelSheet}
-      disabled={status === 'sending' || status === 'generating' || leads.length === 0 || hasBeenSent}
-      className="flex justify-center items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
-    >
-      {hasBeenSent ? (
-        <CheckIcon />
-      ) : status === 'sending' ? (
-        <SpinnerIcon />
-      ) : (
-        <SendIcon />
-      )}
-      {hasBeenSent ? 'Synced!' : status === 'sending' ? 'Syncing...' : 'Sync to Workspace'}
-    </button>
-  );
+  // --- DATA SAVING ---
 
-  const downloadButton = (
-     <button
-      onClick={handleDownloadCSV}
-      disabled={leads.length === 0 || status === 'generating' || status === 'sending'}
-      className="flex justify-center items-center gap-2 px-4 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
-    >
-      <DownloadIcon />
-      Download CSV
-    </button>
-  );
+  const handleSaveLeads = (newLeads: Lead[]) => {
+    // Ensure leads have IDs and stage
+    const processedLeads = newLeads.map(l => ({
+        ...l,
+        id: l.id || Date.now().toString() + Math.random().toString(),
+        stage: l.stage || 'New',
+        dealValue: l.dealValue || 0,
+        comments: l.comments || []
+    }));
 
-  const actionButtons = (
-    <div className="flex items-center gap-3">
-      {downloadButton}
-      {sendButton}
-    </div>
-  );
+    setHistory(prev => {
+        const updated = [...processedLeads, ...prev];
+        localStorage.setItem('prospect_history', JSON.stringify(updated));
+        return updated;
+    });
+  };
+
+  const handleUpdateLead = (updatedLead: Lead) => {
+      setHistory(prev => {
+          const updated = prev.map(l => (l.id === updatedLead.id || l.leadNumber === updatedLead.leadNumber) ? updatedLead : l);
+          localStorage.setItem('prospect_history', JSON.stringify(updated));
+          return updated;
+      });
+  };
+
+  const handleSaveStrategy = (strategy: SavedStrategy) => {
+      setSavedStrategies(prev => {
+          const updated = [strategy, ...prev];
+          localStorage.setItem('icp_strategies', JSON.stringify(updated));
+          return updated;
+      });
+      setCurrentView('new-play'); // Auto switch to prospect play
+  };
+
+  // --- FILTERED DATA FOR ACTIVE PROJECT ---
+  const projectLeads = activeProject ? history.filter(l => l.projectId === activeProject.id) : [];
+  const projectStrategies = activeProject ? savedStrategies.filter(s => s.projectId === activeProject.id) : [];
+
+  // --- VIEW RENDERING HELPERS ---
+  const renderContent = () => {
+      if (currentView === 'profile') {
+          return (
+              <ProfileSettings 
+                  user={user} 
+                  onUpdate={handleUpdateUser} 
+                  onBack={() => {
+                      // Return to appropriate context
+                      if (activeProject) setCurrentView('icp-play'); 
+                      else setCurrentView('projects');
+                  }} 
+              />
+          );
+      }
+
+      if (currentView === 'create-project') {
+          return (
+              <ProjectCreate 
+                  onCreate={handleCreateProject}
+                  onCancel={() => setCurrentView('projects')}
+              />
+          );
+      }
+
+      if (!activeProject) {
+          return (
+              <ProjectList 
+                  projects={projects}
+                  onSelectProject={(p) => {
+                      setActiveProject(p);
+                      setCurrentView('icp-play');
+                  }}
+                  onStartCreate={() => setCurrentView('create-project')}
+                  onDeleteProject={handleDeleteProject}
+              />
+          );
+      }
+
+      // Active Project Views
+      switch (currentView) {
+          case 'new-play':
+              return (
+                <SearchFlow 
+                    projectId={activeProject.id}
+                    onSaveLeads={handleSaveLeads} 
+                    savedStrategies={projectStrategies}
+                    onNavigateToICP={() => setCurrentView('icp-play')}
+                />
+              );
+          case 'icp-play':
+              return (
+                <ICPBuilder 
+                    projectId={activeProject.id}
+                    onSaveStrategy={handleSaveStrategy} 
+                />
+              );
+          case 'pipeline':
+              return (
+                  <CRMBoard 
+                    leads={projectLeads} 
+                    onUpdateLead={handleUpdateLead} 
+                    onSelectLead={setSelectedDeal}
+                  />
+              );
+          case 'history':
+              return <HistoryView savedLeads={projectLeads} />;
+          case 'settings':
+              return (
+                <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-200 animate-fade-up">
+                    <h2 className="text-xl font-bold mb-4">Project Settings: {activeProject.name}</h2>
+                    <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <h3 className="font-semibold text-sm text-gray-900">Project Description</h3>
+                            <p className="text-sm text-gray-500 mt-1">{activeProject.description || "No description."}</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                             <h3 className="font-semibold text-sm text-gray-900">Webhook Endpoint</h3>
+                             <p className="text-sm text-gray-500 mt-1 truncate">https://n8n.chatpgs.com/webhook-test/leads/googlemaps</p>
+                        </div>
+                    </div>
+                </div>
+              );
+          default:
+              return null;
+      }
+  };
+
+  // --- ROUTING ---
+  if (!isAuthenticated) {
+    return <LandingPage onLogin={handleLogin} />;
+  }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-gray-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto animate-fade-up">
-        <header className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl mb-3">
-            Prospect Finder
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Play-based prospecting: Search, enrich, score, and sync directly to your workspace.
-          </p>
-        </header>
-
-        <main className="space-y-8">
-          <CategoryFinder
-            onSubmit={handleFindCategories}
-            isLoading={status === 'findingCategories'}
-            categories={categories}
-            onCategorySelect={handleCategorySelect}
+    <DashboardLayout 
+      user={user} 
+      onLogout={handleLogout}
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      activeProject={activeProject}
+      onBackToProjects={() => {
+          setActiveProject(null);
+          setCurrentView('projects');
+      }}
+    >
+      {renderContent()}
+      
+      {/* Global Modals */}
+      {selectedDeal && (
+          <DealModal 
+            lead={selectedDeal}
+            onClose={() => setSelectedDeal(null)}
+            onUpdate={handleUpdateLead}
           />
-          
-          <LeadForm 
-            onSubmit={handleScrapeLeads} 
-            isLoading={status === 'generating'}
-            formData={formData}
-            onUpdate={handleFormUpdate}
-          />
-
-          <StatusMessage status={status} message={message} />
-          
-          <LeadsTable leads={leads} actionButton={leads.length > 0 ? actionButtons : undefined} />
-        </main>
-
-        <footer className="text-center mt-16 text-gray-400 text-sm pb-8">
-          <p>Powered by Gemini API. Prospect enrichment is AI-simulated for demonstration.</p>
-        </footer>
-      </div>
-    </div>
+      )}
+    </DashboardLayout>
   );
 }
 

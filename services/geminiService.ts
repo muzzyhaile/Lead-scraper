@@ -1,9 +1,24 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GeneratedLeadData } from "../types";
+import { GeneratedLeadData, ICPProfile, ICPStrategy, Lead } from "../types";
+import { crawlCompanyWebsite } from "./tavilyService";
 
 const categoryGenerationSchema = {
     type: Type.ARRAY,
     items: { type: Type.STRING },
+};
+
+const icpStrategySchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            personaName: { type: Type.STRING },
+            searchQuery: { type: Type.STRING },
+            rationale: { type: Type.STRING },
+            outreachAngle: { type: Type.STRING }
+        },
+        required: ["personaName", "searchQuery", "rationale", "outreachAngle"]
+    }
 };
 
 export const generateCategories = async (topic: string): Promise<string[]> => {
@@ -34,81 +49,292 @@ export const generateCategories = async (topic: string): Promise<string[]> => {
     }
 };
 
-export const generateLeads = async (
+export const generateICPStrategy = async (profile: ICPProfile): Promise<ICPStrategy[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `
+    You are a B2B Sales Strategy Expert.
+    
+    I am selling: ${profile.productName}
+    Description: ${profile.productDescription}
+    My Value Proposition: ${profile.valueProposition}
+    My Broad Target: ${profile.targetAudience}
+    Location Context: ${profile.location}
+
+    Your task:
+    1. Analyze this offering.
+    2. Identify 3 distinct "Buyer Personas" or "Market Segments" that would be the best fit.
+    3. For each persona, create a specific Google Maps/Search Query to find them.
+    4. Define a unique "Outreach Angle" that connects my value prop to their likely pain points.
+
+    Return a JSON array of 3 strategies.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: icpStrategySchema
+            },
+        });
+
+        let jsonText = response.text || '[]';
+        if (jsonText.includes('```')) {
+            jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '');
+        }
+        return JSON.parse(jsonText) as ICPStrategy[];
+    } catch (error) {
+        console.error("ICP Strategy generation failed", error);
+        throw new Error("Failed to generate ICP strategies.");
+    }
+}
+
+// Internal interface for the first pass (Discovery)
+export interface DiscoveryResult {
+    companyName: string;
+    website: string;
+    address: string;
+    city: string;
+    country: string;
+    description: string;
+    googleMapsLink: string;
+    coordinates: string;
+    rating: number;
+    reviewCount: number;
+    businessHours: string;
+    category: string;
+}
+
+/**
+ * STEP 1: Discovery
+ * Finds leads using Google Maps Grounding. Returns basic business info.
+ */
+export const discoverLeads = async (
   searchQuery: string,
   city: string,
   country: string,
   numberOfLeads: number
-): Promise<GeneratedLeadData[]> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-  }
-
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  // Based on the "Prospect Finder" flow, we emulate the extraction and icebreaker generation
-  // using Gemini's knowledge and Maps grounding.
-  const prompt = `Act as an advanced "Prospect Finder" bot. Using Google Maps, find ${numberOfLeads} real businesses matching "${searchQuery}" in ${city}, ${country}.
-
-  CRITICAL INSTRUCTION: You must output a strictly valid JSON array.
-  
-  For each business found, you must perform "Contact Extraction" and "Icebreaker Generation" as if you were analyzing their website content.
-  
-  Structure your JSON object exactly like this for each lead:
-  {
-    "companyName": "Business Name",
-    "category": "Primary Category",
-    "description": "Brief description of what they do",
-    "address": "Full address",
-    "city": "City",
-    "country": "Country",
-    "coordinates": "Lat,Lng",
-    "phone": "Phone Number",
-    "email": "Email address (leave empty if not found)",
-    "website": "Website URL",
-    "googleMapsLink": "Direct URL to the business listing on Google Maps",
-    "linkedIn": "LinkedIn URL (optional)",
-    "facebook": "Facebook URL (optional)",
-    "instagram": "Instagram URL (optional)",
-    "rating": Number (e.g. 4.5),
-    "reviewCount": Number,
-    "businessHours": "e.g. Mon-Fri 9-5",
-    "qualityScore": Number (1-100 based on data completeness),
-    "confidenceOverall": Number (0 to 1, heuristic score of how accurate this contact info likely is),
-    "socialContext": "Short snippet justifying the social link (e.g., 'Follow us on LinkedIn')",
-    "icebreaker": "One-line personalized email intro."
-  }
-
-  ICEBREAKER RULE:
-  Generate the 'icebreaker' field using this specific format:
-  "Hi—I'm not sure if this is {name} or perhaps the front office, but I'm a big fan of {paraphrasedApproach} and wanted to run something by {him/her}."
-  - {name} = a specific person name if you can find one, otherwise use the company name.
-  - {paraphrasedApproach} = 3–8 words paraphrasing what the company appears to do based on their category/description.
-  - {him/her} = pronoun if inferable, otherwise 'them'.
-  
-  Example Icebreaker: "Hi—I'm not sure if this is Jane or perhaps the front office, but I'm a big fan of your custom floral arrangements for weddings and wanted to run something by her."`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{ googleMaps: {} }],
-      },
-    });
-
-    let jsonText = response.text || '';
-    
-    // Clean up any potential markdown code blocks
-    if (jsonText.includes('```')) {
-        jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '');
+): Promise<DiscoveryResult[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
     }
-    jsonText = jsonText.trim();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-    const leads = JSON.parse(jsonText) as GeneratedLeadData[];
-    return leads;
-  } catch (error) {
-    console.error("Error generating leads from Gemini:", error);
-    throw new Error("Failed to generate leads. The AI model may be temporarily unavailable or returned invalid data.");
-  }
+    const discoveryPrompt = `Find ${numberOfLeads} real businesses matching "${searchQuery}" in ${city}, ${country}.
+  
+    You MUST use Google Maps to verify they exist.
+    Crucial: Prioritize businesses that have a Website listed, as we need to scrape them.
+    
+    Return a strict JSON array of objects with this structure:
+    {
+      "companyName": "string",
+      "website": "string (URL or empty)",
+      "address": "string",
+      "city": "string",
+      "country": "string",
+      "description": "string (brief)",
+      "googleMapsLink": "string (URL)",
+      "coordinates": "string (lat,lng)",
+      "rating": number,
+      "reviewCount": number,
+      "businessHours": "string",
+      "category": "string"
+    }
+
+    Output ONLY the JSON array. Do not include markdown code blocks or explanations.`;
+
+    try {
+        // NOTE: responseMimeType cannot be used with googleMaps tool.
+        // We rely on the prompt to request JSON and manually parse it.
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: discoveryPrompt,
+          config: {
+            tools: [{ googleMaps: {} }],
+          },
+        });
+    
+        let jsonText = response.text || '[]';
+        
+        // Clean potential markdown
+        if (jsonText.includes('```')) {
+            jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '');
+        }
+
+        // Robust parsing: find the first '[' and last ']'
+        const firstBracket = jsonText.indexOf('[');
+        const lastBracket = jsonText.lastIndexOf(']');
+        
+        if (firstBracket !== -1 && lastBracket !== -1) {
+            jsonText = jsonText.substring(firstBracket, lastBracket + 1);
+        } else {
+             // Fallback: sometimes model returns single object if only 1 requested, or just text if failed
+             console.warn("Could not find JSON array brackets in response", jsonText);
+        }
+
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Discovery Phase failed:", error);
+        throw new Error("Failed to discover leads via Google Maps. Please try again.");
+    }
+}
+
+/**
+ * STEP 2: Enrichment
+ * Takes a list of basic leads, crawls their websites, and uses AI to extract contacts/icebreakers.
+ */
+export const enrichLeads = async (
+    leads: Lead[], 
+    icebreakerContext?: string
+): Promise<Lead[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const enrichedLeads = await Promise.all(leads.map(async (lead) => {
+        let crawledContent = "";
+        
+        // 1. Crawl (Tavily)
+        if (lead.website) {
+            crawledContent = await crawlCompanyWebsite(lead.companyName, lead.website);
+        }
+    
+        // 2. Enrichment (Gemini)
+        const enrichmentPrompt = `
+        You are an expert Lead Enrichment AI Agent.
+        
+        HERE IS THE BUSINESS DATA:
+        Name: ${lead.companyName}
+        Website: ${lead.website}
+        Location: ${lead.address}
+    
+        HERE IS THE CRAWLED WEBSITE CONTENT (Raw Text):
+        ${crawledContent ? crawledContent.slice(0, 15000) : "No website content available."}
+    
+        ${icebreakerContext ? `
+        CONTEXT FOR ICEBREAKER:
+        ${icebreakerContext}
+        
+        Use the context above to frame the icebreaker. Connect the business's specific needs (found in crawl data) to the value proposition described above.
+        ` : `
+        ICEBREAKER RULE:
+        Format: "Hi—I'm not sure if this is {name} or perhaps the front office, but I'm a big fan of {paraphrasedApproach} and wanted to run something by {him/her}."
+        `}
+    
+        YOUR TASK:
+        1. Extract email addresses (look for support@, info@, or specific names).
+        2. Extract social media links (LinkedIn, Facebook, Instagram).
+        3. Extract phone number (if different from initial).
+        4. Extract Contact Person Name (look for Founder, Owner, CEO, or relevant role in 'About Us' or 'Team' sections).
+        5. Extract Contact Person Title.
+        6. Calculate a "Quality Score" (1-100) based on how much info you found.
+        7. Calculate a "Confidence Score" (0.0-1.0) on the accuracy of this data.
+        8. Write a "Smart Icebreaker".
+        
+        Return a JSON object (NOT an array, just the object for this lead):
+        {
+           "phone": "string",
+           "email": "string",
+           "linkedIn": "string",
+           "facebook": "string",
+           "instagram": "string",
+           "contactName": "string (or empty if not found)",
+           "contactTitle": "string (or empty if not found)",
+           "qualityScore": number,
+           "confidenceOverall": number,
+           "socialContext": "string (e.g. 'Found in footer')",
+           "icebreaker": "string"
+        }
+        `;
+    
+        try {
+            const enrichmentResponse = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: enrichmentPrompt,
+                config: {
+                    responseMimeType: "application/json",
+                }
+            });
+    
+            let enrichmentJson = enrichmentResponse.text || '{}';
+            if (enrichmentJson.includes('```')) {
+                enrichmentJson = enrichmentJson.replace(/```json/g, '').replace(/```/g, '');
+            }
+            
+            const enrichedData = JSON.parse(enrichmentJson);
+    
+            // Merge Discovery data with Enriched data
+            return {
+                ...lead,
+                phone: enrichedData.phone || lead.phone || "", 
+                email: enrichedData.email || "",
+                linkedIn: enrichedData.linkedIn || "",
+                facebook: enrichedData.facebook || "",
+                instagram: enrichedData.instagram || "",
+                contactName: enrichedData.contactName || "",
+                contactTitle: enrichedData.contactTitle || "",
+                qualityScore: enrichedData.qualityScore || 50,
+                confidenceOverall: enrichedData.confidenceOverall || 0.5,
+                socialContext: enrichedData.socialContext || "",
+                icebreaker: enrichedData.icebreaker || `Hi—I'm a big fan of ${lead.companyName} and wanted to connect.`
+            };
+    
+        } catch (err) {
+            console.error(`Enrichment failed for ${lead.companyName}`, err);
+            // Fallback if enrichment fails
+            return {
+                ...lead,
+                socialContext: "Enrichment failed",
+                qualityScore: 20,
+                confidenceOverall: 0.3
+            };
+        }
+      }));
+    
+      return enrichedLeads;
+}
+
+// Keeps the old signature for backward compatibility or single-shot use if needed, 
+// but essentially chains the two new functions.
+export const generateLeads = async (
+  searchQuery: string,
+  city: string,
+  country: string,
+  numberOfLeads: number,
+  icebreakerContext?: string
+): Promise<GeneratedLeadData[]> => {
+    const discovery = await discoverLeads(searchQuery, city, country, numberOfLeads);
+    
+    // Convert DiscoveryResult to Lead (partial) for enrichment
+    const partialLeads: Lead[] = discovery.map(d => ({
+        ...d,
+        projectId: "legacy", // Default projectId for legacy calls
+        phone: "",
+        email: "",
+        linkedIn: "",
+        facebook: "",
+        instagram: "",
+        contactName: "",
+        contactTitle: "",
+        qualityScore: 0,
+        confidenceOverall: 0,
+        socialContext: "",
+        icebreaker: "",
+        generatedDate: new Date().toISOString(),
+        searchCity: city,
+        searchCountry: country,
+        leadNumber: 0,
+        status: 'New',
+        contacted: false,
+        notes: ''
+    }));
+
+    return enrichLeads(partialLeads, icebreakerContext);
 };
