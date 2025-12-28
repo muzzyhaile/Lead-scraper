@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User, DashboardView, Project } from '../types';
 import { LogoIcon, LayoutIcon, HistoryIcon, SettingsIcon, UsersIcon, ArrowLeftIcon, FolderIcon, KanbanIcon } from './icons';
@@ -47,10 +46,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative md:flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
-          <div className="flex items-center gap-2">
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            title="Return to Landing Page"
+          >
               <LogoIcon />
               <span className="font-bold text-lg tracking-tight">Prospect Finder</span>
-          </div>
+          </button>
           <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-500">
              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -114,7 +117,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
-            {/* Logout is now a separate tiny action or part of the profile settings, but keeping here for ease */}
             <div 
                 onClick={(e) => { e.stopPropagation(); onLogout(); }} 
                 className="text-gray-400 hover:text-gray-600 p-2 cursor-pointer rounded-md hover:bg-gray-200"
@@ -134,7 +136,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-gray-600">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
-                <span className="font-bold text-lg">Prospect Finder</span>
+                <button onClick={onLogout} className="font-bold text-lg">Prospect Finder</button>
             </div>
             <div 
                 className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs overflow-hidden"
