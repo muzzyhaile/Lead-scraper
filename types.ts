@@ -61,7 +61,7 @@ export interface User {
 }
 
 export type ViewState = 'landing' | 'projects' | 'dashboard';
-export type DashboardView = 'projects' | 'create-project' | 'profile' | 'new-play' | 'icp-play' | 'history' | 'settings' | 'pipeline';
+export type DashboardView = 'projects' | 'create-project' | 'profile' | 'new-play' | 'icp-play' | 'icp-wizard' | 'history' | 'settings' | 'pipeline';
 
 export interface Project {
     id: string;

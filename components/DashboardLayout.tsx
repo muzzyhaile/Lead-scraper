@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { User, DashboardView, Project } from '../types';
-import { LogoIcon, LayoutIcon, HistoryIcon, SettingsIcon, UsersIcon, ArrowLeftIcon, FolderIcon, KanbanIcon } from './icons';
+import { LogoIcon, LayoutIcon, HistoryIcon, SettingsIcon, UsersIcon, ArrowLeftIcon, FolderIcon, KanbanIcon, LightbulbIcon } from './icons';
 
 interface DashboardLayoutProps {
   user: User;
@@ -24,8 +25,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
+    { id: 'icp-wizard', label: 'Strategy Assistant', icon: <LightbulbIcon /> },
     { id: 'icp-play', label: 'ICP Builder', icon: <UsersIcon /> },
-    { id: 'new-play', label: 'Prospect', icon: <LayoutIcon /> },
+    { id: 'new-play', label: 'Prospect Search', icon: <LayoutIcon /> },
     { id: 'pipeline', label: 'Deal Pipeline', icon: <KanbanIcon /> },
     { id: 'history', label: 'History', icon: <HistoryIcon /> },
     { id: 'settings', label: 'Settings', icon: <SettingsIcon /> },

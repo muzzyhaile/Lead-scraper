@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, DashboardView, Lead, SavedStrategy, Project } from './types';
+import { User, DashboardView, Lead, SavedStrategy, Project, ICPProfile } from './types';
 import LandingPage from './components/LandingPage';
 import DashboardLayout from './components/DashboardLayout';
 import SearchFlow from './components/SearchFlow';
 import HistoryView from './components/HistoryView';
 import ICPBuilder from './components/ICPBuilder';
+import StrategyWizard from './components/StrategyWizard';
 import ProjectList from './components/ProjectList';
 import ProfileSettings from './components/ProfileSettings';
 import ProjectCreate from './components/ProjectCreate';
@@ -177,6 +179,9 @@ function App() {
   const [history, setHistory] = useState<Lead[]>([]);
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
   
+  // Wizard State
+  const [wizardProfile, setWizardProfile] = useState<ICPProfile | undefined>(undefined);
+
   // CRM State
   const [selectedDeal, setSelectedDeal] = useState<Lead | null>(null);
 
@@ -265,7 +270,7 @@ function App() {
       setProjects(updated);
       localStorage.setItem('prospect_projects', JSON.stringify(updated));
       setActiveProject(newProject);
-      setCurrentView('icp-play'); // Go to ICP first in new project
+      setCurrentView('icp-wizard'); // Suggest wizard for new projects
   };
 
   const handleDeleteProject = (id: string) => {
@@ -318,6 +323,11 @@ function App() {
       setCurrentView('new-play'); 
   };
 
+  const handleWizardComplete = (profile: ICPProfile) => {
+      setWizardProfile(profile);
+      setCurrentView('icp-play');
+  };
+
   // --- FILTERED DATA FOR ACTIVE PROJECT ---
   const projectLeads = activeProject ? history.filter(l => l.projectId === activeProject.id) : [];
   const projectStrategies = activeProject ? savedStrategies.filter(s => s.projectId === activeProject.id) : [];
@@ -330,7 +340,7 @@ function App() {
                   user={user} 
                   onUpdate={handleUpdateUser} 
                   onBack={() => {
-                      if (activeProject) setCurrentView('icp-play'); 
+                      if (activeProject) setCurrentView('pipeline'); 
                       else setCurrentView('projects');
                   }} 
               />
@@ -352,7 +362,7 @@ function App() {
                   projects={projects}
                   onSelectProject={(p) => {
                       setActiveProject(p);
-                      setCurrentView('pipeline'); // Default to pipeline for active demo feel
+                      setCurrentView('pipeline'); 
                   }}
                   onStartCreate={() => setCurrentView('create-project')}
                   onDeleteProject={handleDeleteProject}
@@ -361,20 +371,23 @@ function App() {
       }
 
       switch (currentView) {
+          case 'icp-wizard':
+              return <StrategyWizard onComplete={handleWizardComplete} />;
           case 'new-play':
               return (
                 <SearchFlow 
                     projectId={activeProject.id}
                     onSaveLeads={handleSaveLeads} 
                     savedStrategies={projectStrategies}
-                    onNavigateToICP={() => setCurrentView('icp-play')}
+                    onNavigateToICP={() => setCurrentView('icp-wizard')}
                 />
               );
           case 'icp-play':
               return (
                 <ICPBuilder 
                     projectId={activeProject.id}
-                    onSaveStrategy={handleSaveStrategy} 
+                    onSaveStrategy={handleSaveStrategy}
+                    initialProfile={wizardProfile}
                 />
               );
           case 'pipeline':
@@ -421,6 +434,7 @@ function App() {
       activeProject={activeProject}
       onBackToProjects={() => {
           setActiveProject(null);
+          setWizardProfile(undefined);
           setCurrentView('projects');
       }}
     >
